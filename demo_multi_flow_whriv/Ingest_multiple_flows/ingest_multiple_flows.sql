@@ -44,3 +44,18 @@ SELECT
 FROM multi_flow_2_silver.orders_silver_flows_demo
 GROUP BY product_name, order_month
 ORDER BY order_month DESC;
+
+CREATE OR REPLACE MATERIALIZED VIEW whriv.multi_flow_3_gold.daily_returns_gd
+AS
+SELECT
+  order_id,
+  order_date,
+  customer_name,
+  payment_method,
+  product_name,
+  SUM(quantity) AS total_units,
+  ROUND(SUM(order_total)) AS total_revenue
+FROM multi_flow_2_silver.orders_silver_flows_demo
+WHERE order_status = 'Returned'
+GROUP BY order_id, product_name, order_date, payment_method, customer_name
+ORDER BY order_date DESC;

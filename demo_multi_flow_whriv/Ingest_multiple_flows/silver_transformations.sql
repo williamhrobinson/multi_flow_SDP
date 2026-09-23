@@ -3,6 +3,8 @@ CREATE OR REFRESH STREAMING TABLE multi_flow_2_silver.orders_silver_flows_demo
 -- A. Define a fixed schema to prevent schema evolution.
   order_id         STRING,
   order_date       DATE,
+  order_month      DATE,
+  order_year       DATE,
   company_name     STRING,
   customer_name    STRING,
   customer_email   STRING,
@@ -33,6 +35,8 @@ AS
 SELECT
     order_id,
     TRY_CAST(order_date AS DATE) AS order_date,
+    TRY_CAST(date_trunc('Month',order_date) AS DATE) as order_month,
+    TRY_CAST(date_trunc('year',order_date) AS DATE) as order_year,
     company_name,
     customer_name,
     customer_email,

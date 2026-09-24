@@ -121,3 +121,51 @@ FROM STREAM read_files(
   '/Volumes/whriv/multi_flow_1_bronze/northstar_outfitters_orders',    -- Uses the configuration parameter to point to the northstar_outfitters_orders volume
   format => 'json'
 );
+
+-- ════════════════════════════════════════════════════════════
+-- -- CREATE THE BRONZE TABLE STRUCTURE
+-- ════════════════════════════════════════════════════════════
+CREATE OR REPLACE STREAMING TABLE multi_flow_1_bronze.dim_products_bz
+(
+  product_id         STRING,
+  product_name       STRING,
+  company_name       STRING,
+  category           STRING,
+  subcategory        STRING,
+  base_price         STRING,
+  brand              STRING,
+  sku                STRING,
+  _rescued_data      STRING,
+  source_file        STRING,    -- Added by the _metadata column to return the source file name
+  file_mod_time      TIMESTAMP  -- Added by the _metadata column to return file modification time of the file. Returns a consistent value
+)
+COMMENT "Creates a single bronze streaming table with product data."
+TBLPROPERTIES (
+  'pipelines.reset.allowed' = false    -- prevent full table refreshes on the bronze table
+);
+
+-- ═══════════════════════════════════════════════════════════════
+-- -- BRONZE FLOW - PRODUCTS DIMENSION
+-- ═══════════════════════════════════════════════════════════════
+-- Read CSV files from the dim_products volume
+CREATE FLOW dim_products_bz_flow
+AS INSERT INTO multi_flow_1_bronze.dim_products_bz BY NAME
+SELECT
+  CAST(product_id AS STRING) AS product_id,
+  CAST(product_name AS STRING) AS product_name,
+  CAST(company_name AS STRING) AS company_name,
+  CAST(category AS STRING) AS category,
+  CAST(subcategory AS STRING) AS subcategory,
+  CAST(base_price AS STRING) AS base_price,
+  CAST(brand AS STRING) AS brand,
+  CAST(sku AS STRING) AS sku,
+  CAST(_rescued_data AS STRING) AS _rescued_data,
+  _metadata.file_name AS source_file,
+  _metadata.file_modification_time AS file_mod_time
+FROM STREAM read_files(
+  '/Volumes/whriv/multi_flow_1_bronze/dim_products',    -- Uses the configuration parameter to point to the products volume
+  format => 'csv',
+  header => true
+);
+
+

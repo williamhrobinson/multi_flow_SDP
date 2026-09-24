@@ -15,6 +15,5 @@ GROUP BY region;
 CREATE OR REPLACE MATERIALIZED VIEW whriv.multi_flow_3_gold.dim_products_gd
 AS
 SELECT
-  product_name
-FROM multi_flow_2_silver.orders_silver_flows_demo
-GROUP BY product_name;
+  *
+FROM multi_flow_2_silver.dim_products_sr;

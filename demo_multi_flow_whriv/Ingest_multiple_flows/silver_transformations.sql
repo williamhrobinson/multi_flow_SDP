@@ -52,3 +52,41 @@ SELECT
     order_status
 -- F. Incrementally reads data from the bronze table that contains data from three volumes.
 FROM STREAM multi_flow_1_bronze.orders_bronze_flows_demo;
+
+--Products dimension table
+CREATE OR REFRESH STREAMING TABLE multi_flow_2_silver.dim_products_sr
+(
+-- A. Define a fixed schema to prevent schema evolution.
+  product_id         STRING,
+  product_name       STRING,
+  company_name       STRING,
+  category           STRING,
+  subcategory        STRING,
+  base_price         DECIMAL(10,2),
+  brand              STRING,
+  sku                STRING,
+
+-- B. Data quality constraints to drop or flag or drop invalid rows.
+CONSTRAINT base_price EXPECT (base_price > 0) ON VIOLATION FAIL UPDATE,
+CONSTRAINT product_id EXPECT (product_id IS NOT NULL) ON VIOLATION FAIL UPDATE
+)
+
+-- C. Adds a table comment
+COMMENT 'Clean and standardized data from products dimesion bronze table'
+
+-- D. Enable liquid clustering to improve performance on common filters.
+CLUSTER BY AUTO
+
+AS
+-- E. Select and clean data from the bronze table
+SELECT
+  product_id,
+  product_name,
+  company_name,
+  category,
+  subcategory,
+  TRY_CAST(base_price AS DECIMAL(10,2)) AS base_price,
+  brand,
+  sku
+-- F. Incrementally reads data from the bronze table that contains data from three volumes.
+FROM STREAM multi_flow_1_bronze.dim_products_bz;
